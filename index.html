@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Population Growth Models: Exponential vs Logistic</title>
+<style>
+:root{--bg:#f7fafb;--card:#fff;--text:#263746;--muted:#5f6b76;--navy:#16354b;--teal:#167c80;--tint:#e4f1f2;--line:#d6e1e8;--orange:#c4701c;--bad:#b3261e;--ok:#1b7a43;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a24;--card:#16232f;--text:#d7e2ea;--muted:#93a3b0;--navy:#e8f1f6;--teal:#4cc3c8;--tint:#1b2f3b;--line:#2a3e4d;--orange:#f0a050;--bad:#ff8a80;--ok:#6fd195;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1a24;--card:#16232f;--text:#d7e2ea;--muted:#93a3b0;--navy:#e8f1f6;--teal:#4cc3c8;--tint:#1b2f3b;--line:#2a3e4d;--orange:#f0a050;--bad:#ff8a80;--ok:#6fd195;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+main{max-width:980px;margin:0 auto;padding:18px 16px 32px}
+h1{font-size:24px;line-height:1.25;color:var(--navy);margin:4px 0 4px}
+h2{font-size:16px;color:var(--teal);margin:0 0 10px}
+.sub{color:var(--muted);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.inputs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px}
+input{width:100%;font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text)}
+input:focus{outline:2px solid var(--teal);outline-offset:1px}
+button{font:inherit;padding:9px 14px;border-radius:8px;border:1px solid var(--teal);background:var(--tint);color:var(--navy);cursor:pointer;margin-top:12px}
+#msg{color:var(--bad);margin:10px 0 0;font-weight:600}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.k{background:var(--tint);border-radius:10px;padding:12px}
+.k b{display:block;font-size:20px;color:var(--navy)}
+.k span{font-size:12.5px;color:var(--muted)}
+svg{width:100%;height:auto;display:block}
+.sc{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:480px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line)}
+th{background:var(--tint);color:var(--navy);font-weight:600}
+th:first-child,td:first-child{text-align:left}
+.chk{display:flex;flex-wrap:wrap;gap:8px 18px}
+.chk div{font-size:13.5px}
+.pass{color:var(--ok);font-weight:700}.fail{color:var(--bad);font-weight:700}
+.note{font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+<h1>Population Growth Models: Exponential vs Logistic</h1>
+<p class="sub">Enter the starting values and see both models side by side. Micro-project, Mathematics and Computing, MITS Gwalior.</p>
+
+<section class="card">
+<h2>Inputs</h2>
+<div class="inputs">
+<div><label for="P0">Initial population P₀ (individuals)</label><input id="P0" type="number" step="any" value="1000"></div>
+<div><label for="r">Growth rate r (per year, 5% = 0.05)</label><input id="r" type="number" step="any" value="0.05"></div>
+<div><label for="K">Carrying capacity K (individuals)</label><input id="K" type="number" step="any" value="5000"></div>
+<div><label for="T">Duration T (years)</label><input id="T" type="number" step="any" value="20"></div>
+<div><label for="dt">Table interval (years)</label><input id="dt" type="number" step="any" value="5"></div>
+</div>
+<button id="reset" type="button">Reset to project values</button>
+<p id="msg" role="alert"></p>
+</section>
+
+<div id="out">
+<section class="card"><h2>Key results</h2><div class="cards" id="kr"></div><p class="note" id="fast"></p></section>
+
+<section class="card"><h2>Graph</h2>
+<svg id="chart" viewBox="0 0 720 360" role="img" aria-label="Population against time for the exponential and logistic models"></svg>
+<p class="note" id="clip"></p></section>
+
+<section class="card"><h2>Population table</h2><div class="sc"><table><thead><tr><th>Time (years)</th><th>Exponential</th><th>Logistic</th><th>Difference</th><th>Ratio</th></tr></thead><tbody id="tb"></tbody></table></div></section>
+
+<section class="card"><h2>Live checks</h2><div class="chk" id="ck"></div></section>
+</div>
+
+<section class="card">
+<h2>Models used</h2>
+<p><b>Exponential:</b> dP/dt = rP, so P(t) = P₀ e<sup>rt</sup>. Growth has no limit.<br>
+<b>Logistic:</b> dP/dt = rP(1 − P/K), so P(t) = K / [1 + ((K − P₀)/P₀) e<sup>−rt</sup>]. Growth slows as the population approaches K.</p>
+<p class="note">Assumptions: one population, constant r and K, no migration. This is an educational prototype, and its results are illustrations, not official forecasts. Valid inputs need P₀ &gt; 0, r &gt; 0, K &gt; P₀, T &gt; 0 and an interval &gt; 0.</p>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const nf=(x,d=2)=>x.toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+const DEF={P0:1000,r:0.05,K:5000,T:20,dt:5};
+const ex=(t,v)=>v.P0*Math.exp(v.r*t);
+const lg=(t,v)=>v.K/(1+((v.K-v.P0)/v.P0)*Math.exp(-v.r*t));
+const read=()=>({P0:+$("P0").value,r:+$("r").value,K:+$("K").value,T:+$("T").value,dt:+$("dt").value});
+
+function check(v){
+  const bad=[];
+  if(![v.P0,v.r,v.K,v.T,v.dt].every(Number.isFinite)) return ["Please fill in every input with a number."];
+  if(v.P0<=0) bad.push("P₀ must be greater than 0.");
+  if(v.r<=0) bad.push("r must be greater than 0.");
+  if(v.K<=v.P0) bad.push("K must be greater than P₀.");
+  if(v.T<=0) bad.push("T must be greater than 0.");
+  if(v.dt<=0) bad.push("The interval must be greater than 0.");
+  if(v.dt>0&&v.T/v.dt>200) bad.push("Too many rows: use a larger interval.");
+  return bad;
+}
+
+function chart(v){
+  const W=720,H=360,L=70,R=16,Tm=16,B=50,pw=W-L-R,ph=H-Tm-B;
+  const ymax=Math.max(v.K*1.1,lg(v.T,v)*1.05);
+  const X=t=>L+t/v.T*pw, Y=p=>Tm+ph-Math.min(p,ymax*1.5)/ymax*ph;
+  const N=120,pts=f=>Array.from({length:N+1},(_,i)=>{const t=v.T*i/N;return X(t).toFixed(1)+","+Y(f(t,v)).toFixed(1)}).join(" ");
+  let s='<defs><clipPath id="c"><rect x="'+L+'" y="'+Tm+'" width="'+pw+'" height="'+ph+'"/></clipPath></defs>';
+  for(let i=0;i<=5;i++){
+    const y=Tm+ph-ph*i/5, val=ymax*i/5, tx=v.T*i/5;
+    s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" stroke="var(--line)"/>';
+    s+='<text x="'+(L-8)+'" y="'+(y+4)+'" text-anchor="end" font-size="12" fill="var(--muted)">'+Math.round(val).toLocaleString("en-US")+'</text>';
+    s+='<text x="'+(L+pw*i/5)+'" y="'+(H-B+18)+'" text-anchor="middle" font-size="12" fill="var(--muted)">'+(+tx.toFixed(1))+'</text>';
+  }
+  s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v.K)+'" y2="'+Y(v.K)+'" stroke="var(--orange)" stroke-width="1.6" stroke-dasharray="6 4"/>';
+  s+='<g clip-path="url(#c)"><polyline points="'+pts(ex)+'" fill="none" stroke="var(--navy)" stroke-width="2.4"/><polyline points="'+pts(lg)+'" fill="none" stroke="var(--teal)" stroke-width="2.4"/></g>';
+  s+='<text x="'+(L+pw/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="13" fill="var(--text)">Time (years)</text>';
+  s+='<text transform="translate(16 '+(Tm+ph/2)+') rotate(-90)" text-anchor="middle" font-size="13" fill="var(--text)">Population (individuals)</text>';
+  const lx=L+12;
+  [["var(--navy)","Exponential"],["var(--teal)","Logistic"],["var(--orange)","Carrying capacity K"]].forEach((a,i)=>{
+    s+='<line x1="'+lx+'" x2="'+(lx+22)+'" y1="'+(Tm+14+i*18)+'" y2="'+(Tm+14+i*18)+'" stroke="'+a[0]+'" stroke-width="2.4"'+(i==2?' stroke-dasharray="6 4"':'')+'/><text x="'+(lx+30)+'" y="'+(Tm+18+i*18)+'" font-size="12.5" fill="var(--text)">'+a[1]+'</text>';
+  });
+  $("chart").innerHTML=s;
+  $("clip").textContent=ex(v.T,v)>ymax?"The exponential curve leaves the top of the graph because it has no upper limit.":"";
+}
+
+function update(){
+  const v=read(), bad=check(v);
+  $("msg").textContent=bad.join(" ");
+  $("out").style.display=bad.length?"none":"block";
+  if(bad.length) return;
+  const eT=ex(v.T,v), lT=lg(v.T,v);
+  const cards=[[nf(eT),"Exponential at "+(+v.T.toFixed(2))+" years"],[nf(lT),"Logistic at "+(+v.T.toFixed(2))+" years"],
+    ["+"+nf((eT/lT-1)*100,1)+"%","Exponential is higher by"],[nf(Math.log(2)/v.r)+" yr","Doubling time (exponential)"],
+    [nf(lT/v.K*100,1)+"%","Share of K reached (logistic)"]];
+  $("kr").innerHTML=cards.map(c=>'<div class="k"><b>'+c[0]+'</b><span>'+c[1]+'</span></div>').join("");
+  $("fast").textContent=(v.P0<v.K/2?"Logistic growth is fastest at P = K/2, after "+nf(Math.log((v.K-v.P0)/v.P0)/v.r)+" years, at "+nf(v.r*v.K/4,1)+" individuals per year."
+    :"The starting population is already above K/2, so logistic growth is already slowing down.");
+  const n=Math.floor(v.T/v.dt+1e-9); let rows="";
+  for(let i=0;i<=n;i++){const t=+(i*v.dt).toFixed(6),e=ex(t,v),l=lg(t,v);
+    rows+="<tr><td>"+(+t.toFixed(2))+"</td><td>"+nf(e)+"</td><td>"+nf(l)+"</td><td>"+nf(e-l)+"</td><td>"+(e/l).toFixed(3)+"</td></tr>";}
+  $("tb").innerHTML=rows;
+  let ok2=true; for(let i=1;i<=100;i++){const t=v.T*i/100; if(lg(t,v)>=ex(t,v)) ok2=false;}
+  const tests=[["Both models give P₀ at t = 0",Math.abs(ex(0,v)-v.P0)<1e-9&&Math.abs(lg(0,v)-v.P0)<1e-9],
+    ["Logistic stays below K",lg(v.T,v)<v.K],["Logistic stays below exponential for t > 0",ok2]];
+  $("ck").innerHTML=tests.map(t=>'<div>'+t[0]+': <span class="'+(t[1]?"pass":"fail")+'">'+(t[1]?"PASS":"FAIL")+'</span></div>').join("");
+  chart(v);
+}
+["P0","r","K","T","dt"].forEach(id=>$(id).addEventListener("input",update));
+$("reset").addEventListener("click",()=>{for(const k in DEF)$(k).value=DEF[k];update();});
+update();
+</script>
+</body>
+</html>
